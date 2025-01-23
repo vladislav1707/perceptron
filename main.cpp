@@ -13,13 +13,19 @@ const double BIAS = 1.0;
 double learningRate;
 std::vector<int> topology = {784, 256, 256, 10}; // нужно эксперементировать, вероятно мне нужно 512 нейронов в скрытых слоях
 
-void act(double &value) // тут используется функция активации ReLU
+// Функция активации ReLU
+void act(double &value)
 {
     if (value < 0)
     {
         value = 0;
     }
     // иначе все остается как есть
+}
+// Производная ReLU
+double actDerivative(double value)
+{
+    return value > 0 ? 1.0 : 0.0;
 }
 
 struct neuron
@@ -35,7 +41,7 @@ public:
     int layers;
     neuron **neurons;
     double ***weights; // 1 слой, 2 номер нейрона, 3 связь с нейроном в следующем слое
-    int *size;
+    int *size;         // как topology но для Network
 
     Network(const std::vector<int> &topology)
     {
@@ -102,6 +108,58 @@ public:
                 act(neurons[layer][neuron].value);
             }
         }
+    }
+
+    // Метод обратного распространения ошибки
+    void backprop(const std::vector<double> &target)
+    {
+        // 1. Вычисление ошибки для выходного слоя
+        int output_layer = layers - 1;
+        for (int i = 0; i < size[output_layer]; i++)
+        {
+            double output = neurons[output_layer][i].value;
+            // Производная квадратичной функции потерь
+            neurons[output_layer][i].error = (output - target[i]) * actDerivative(output);
+        }
+
+        // 2. Обратное распространение ошибки по скрытым слоям
+        for (int layer = output_layer - 1; layer > 0; layer--)
+        {
+            for (int i = 0; i < size[layer]; i++)
+            {
+                double error = 0.0;
+                // Суммируем взвешенные ошибки следующего слоя
+                for (int j = 0; j < size[layer + 1]; j++)
+                {
+                    error += neurons[layer + 1][j].error * weights[layer][i][j];
+                }
+                neurons[layer][i].error = error * actDerivative(neurons[layer][i].value);
+            }
+        }
+
+        // 3. Обновление весов
+        for (int layer = 0; layer < layers - 1; layer++)
+        {
+            for (int i = 0; i < size[layer]; i++)
+            {
+                for (int j = 0; j < size[layer + 1]; j++)
+                {
+                    weights[layer][i][j] -= learningRate * neurons[layer][i].value * neurons[layer + 1][j].error;
+                }
+            }
+        }
+    }
+
+    double calculateError(const std::vector<double> &target)
+    {
+        double error = 0.0;
+        int output_layer = layers - 1;
+        for (int i = 0; i < size[output_layer]; i++)
+        {
+            double diff = neurons[output_layer][i].value - target[i];
+            error += diff * diff;
+        }
+        return error / size[output_layer];
     }
 
     // Получение выходного слоя(получение вероятностей ответа нейросети)
