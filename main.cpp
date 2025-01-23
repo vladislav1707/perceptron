@@ -1,6 +1,7 @@
 #include <iostream>
 #include <random>
 #include <chrono>
+#include <vector>
 
 //@ random number generator
 std::random_device rd;
@@ -9,15 +10,16 @@ std::uniform_real_distribution<> dis(0.0, 1.0);
 
 //@ parameters
 const double BIAS = 1.0;
-std::vector<int> topology = {784, 256, 256, 10}; // need experiments, may i need set 512 neurons in hidden layers
+double learningRate;
+std::vector<int> topology = {784, 256, 256, 10}; // нужно эксперементировать, вероятно мне нужно 512 нейронов в скрытых слоях
 
-void act(double &value) // using ReLU
+void act(double &value) // тут используется функция активации ReLU
 {
     if (value < 0)
     {
         value = 0;
     }
-    // otherwise everything is left as is
+    // иначе все остается как есть
 }
 
 struct neuron
@@ -32,12 +34,12 @@ class Network
 public:
     int layers;
     neuron **neurons;
-    double ***weights; // 1 layer, 2 neuron number, 3 connection number of the neuron in the next layer
+    double ***weights; // 1 слой, 2 номер нейрона, 3 связь с нейроном в следующем слое
     int *size;
 
     Network(const std::vector<int> &topology)
     {
-        // initialization of layers count and size array that stores neurons count for each layer
+        // инициализация количества слоев и массива size, который хранит количество нейронов для каждого слоя
         layers = topology.size();
 
         size = new int[layers];
@@ -46,14 +48,14 @@ public:
             size[i] = topology[i];
         }
 
-        // creating neurons
+        // создание нейронов
         neurons = new neuron *[layers];
         for (int i = 0; i < layers; i++)
         {
             neurons[i] = new neuron[topology[i]];
         }
 
-        // creating weights
+        // создание весов
         weights = new double **[layers - 1];
         for (int i = 0; i < layers - 1; i++)
         {
@@ -61,7 +63,7 @@ public:
             for (int j = 0; j < topology[i]; j++)
             {
                 weights[i][j] = new double[topology[i + 1]];
-                // fill with random from 0 to 1
+                // заполнение случайными значение от 0 до 1
                 for (int k = 0; k < topology[i + 1]; k++)
                 {
                     weights[i][j][k] = dis(gen);
@@ -69,9 +71,52 @@ public:
             }
         }
     }
+    // Метод прямого распространения
+    void forward(const std::vector<double> &input)
+    {
+        // Установка входных значений
+        for (int i = 0; i < size[0]; i++)
+        {
+            neurons[0][i].value = input[i];
+        }
+
+        // Проход по всем слоям, кроме входного
+        for (int layer = 1; layer < layers; layer++)
+        {
+            // Проход по всем нейронам текущего слоя
+            for (int neuron = 0; neuron < size[layer]; neuron++)
+            {
+                double sum = 0;
+
+                // Вычисление взвешенной суммы
+                for (int prev = 0; prev < size[layer - 1]; prev++)
+                {
+                    sum += neurons[layer - 1][prev].value * weights[layer - 1][prev][neuron];
+                }
+
+                // Добавление bias
+                sum += BIAS;
+
+                // Применение функции активации
+                neurons[layer][neuron].value = sum;
+                act(neurons[layer][neuron].value);
+            }
+        }
+    }
+
+    // Получение выходного слоя(получение вероятностей ответа нейросети)
+    std::vector<double> getOutput()
+    {
+        std::vector<double> output(size[layers - 1]);
+        for (int i = 0; i < size[layers - 1]; i++)
+        {
+            output[i] = neurons[layers - 1][i].value;
+        }
+        return output;
+    }
     ~Network()
     {
-        // Freeing up memory for weights
+        // освобождение памяти от весов
         for (int i = 0; i < layers - 1; i++)
         {
             for (int j = 0; j < size[i]; j++)
@@ -82,19 +127,21 @@ public:
         }
         delete[] weights;
 
-        // Freeing up memory for neurons
+        // освобождение памяти от нейронов
         for (int i = 0; i < layers; i++)
         {
             delete[] neurons[i];
         }
         delete[] neurons;
 
-        // Free up memory for the size array
+        // освобождение памяти для массива размеров
         delete[] size;
     }
 };
 
 int main(int argc, char **args)
 {
+    std::cout << "Enter learning rate (recommended range 0.0001 - 0.1): ";
+    std::cin >> learningRate;
     Network net(topology);
 }
