@@ -11,7 +11,7 @@ std::uniform_real_distribution<> dis(0.0, 1.0);
 
 //@ parameters
 const double BIAS = 1.0;
-double learningRate;
+double learningRate = 0.01;
 std::vector<int> topology = {784, 256, 256, 10}; // нужно эксперементировать, вероятно мне нужно 512 нейронов в скрытых слоях
 
 // Функция активации ReLU
@@ -39,8 +39,8 @@ double actDerivative(double value)
 struct neuron
 {
 public:
-    double value = round(dis(gen) * 100.0) / 100.0;
-    double error;
+    double value = 0.0;
+    double error = 0.0;
 };
 
 class Network
@@ -80,7 +80,7 @@ public:
                 // заполнение случайными значение от 0 до 1
                 for (int k = 0; k < topology[i + 1]; k++)
                 {
-                    weights[i][j][k] = dis(gen);
+                    weights[i][j][k] = dis(gen) * sqrt(2.0 / size[i]); // реализация инициализации весов He
                 }
             }
         }

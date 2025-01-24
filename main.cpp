@@ -111,8 +111,6 @@ int main(int argc, char **args)
     std::string whereToSave;
     std::string whereToLoad;
 
-    std::cout << "Enter learning rate (recommended range 0.0001 - 0.1): ";
-    std::cin >> learningRate;
     std::cout << "provide training?(1 yes, 0 no): ";
     std::cin >> train;
     if (train == 1)
@@ -136,8 +134,8 @@ int main(int argc, char **args)
     try
     {
         // Загрузка обучающих данных
-        auto train_images = readMNISTImages("t10k-images.idx3-ubyte");
-        auto train_labels = readMNISTLabels("t10k-labels.idx1-ubyte");
+        auto train_images = readMNISTImages("train-images.idx3-ubyte");
+        auto train_labels = readMNISTLabels("train-labels.idx1-ubyte");
 
         std::cout << "Loaded " << train_images.size() << " training images" << std::endl;
 
