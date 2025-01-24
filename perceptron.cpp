@@ -26,7 +26,14 @@ void act(double &value)
 // Производная ReLU
 double actDerivative(double value)
 {
-    return value > 0 ? 1.0 : 0.0;
+    if (value > 0)
+    {
+        return 1.0;
+    }
+    else
+    {
+        return 0.0;
+    }
 }
 
 struct neuron
