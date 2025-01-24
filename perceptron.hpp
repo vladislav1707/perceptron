@@ -2,7 +2,7 @@
 #include <random>
 #include <chrono>
 #include <vector>
-// #include <fstream>
+#include <fstream>
 
 //@ random number generator
 std::random_device rd;
@@ -85,6 +85,98 @@ public:
             }
         }
     }
+
+    // Новый метод для сохранения состояния сети в файл
+    bool saveToFile(const std::string &filename)
+    {
+        std::ofstream file(filename, std::ios::binary);
+        if (!file.is_open())
+        {
+            std::cerr << "error: cant open file to save" << std::endl;
+            return false;
+        }
+
+        // Сохраняем основные параметры сети
+        file.write(reinterpret_cast<char *>(&layers), sizeof(layers));
+        for (int i = 0; i < layers; i++)
+        {
+            file.write(reinterpret_cast<char *>(&size[i]), sizeof(size[i]));
+        }
+
+        // Сохраняем значения нейронов
+        for (int i = 0; i < layers; i++)
+        {
+            for (int j = 0; j < size[i]; j++)
+            {
+                file.write(reinterpret_cast<char *>(&neurons[i][j].value), sizeof(double));
+            }
+        }
+
+        // Сохраняем веса
+        for (int i = 0; i < layers - 1; i++)
+        {
+            for (int j = 0; j < size[i]; j++)
+            {
+                for (int k = 0; k < size[i + 1]; k++)
+                {
+                    file.write(reinterpret_cast<char *>(&weights[i][j][k]), sizeof(double));
+                }
+            }
+        }
+
+        file.close();
+        return true;
+    }
+
+    // Новый метод для загрузки состояния сети из файла
+    static Network *loadFromFile(const std::string &filename)
+    {
+        std::ifstream file(filename, std::ios::binary);
+        if (!file.is_open())
+        {
+            std::cerr << "error: cant open file to load" << std::endl;
+            return nullptr;
+        }
+
+        // Читаем количество слоев
+        int layers;
+        file.read(reinterpret_cast<char *>(&layers), sizeof(layers));
+
+        // Читаем размеры слоев и создаем топологию
+        std::vector<int> topology(layers);
+        for (int i = 0; i < layers; i++)
+        {
+            file.read(reinterpret_cast<char *>(&topology[i]), sizeof(int));
+        }
+
+        // Создаем новую сеть с загруженной топологией
+        Network *network = new Network(topology);
+
+        // Загружаем значения нейронов
+        for (int i = 0; i < layers; i++)
+        {
+            for (int j = 0; j < topology[i]; j++)
+            {
+                file.read(reinterpret_cast<char *>(&network->neurons[i][j].value), sizeof(double));
+            }
+        }
+
+        // Загружаем веса
+        for (int i = 0; i < layers - 1; i++)
+        {
+            for (int j = 0; j < topology[i]; j++)
+            {
+                for (int k = 0; k < topology[i + 1]; k++)
+                {
+                    file.read(reinterpret_cast<char *>(&network->weights[i][j][k]), sizeof(double));
+                }
+            }
+        }
+
+        file.close();
+        return network;
+    }
+
     // Метод прямого распространения
     void forward(const std::vector<double> &input)
     {
