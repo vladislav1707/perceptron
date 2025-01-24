@@ -81,8 +81,33 @@ std::vector<std::vector<double>> readMNISTLabels(const std::string &filename)
 
 int main(int argc, char **args)
 {
+    int train;
+    int saveModel;
+    int loadModel;
+    std::string whereToSave;
+    std::string whereToLoad;
+
     std::cout << "Enter learning rate (recommended range 0.0001 - 0.1): ";
     std::cin >> learningRate;
+    std::cout << "provide training?(1 yes, 0 no)";
+    std::cin >> train;
+    if (train == 1)
+    {
+        std::cout << "save new model?(1 yes, 0 no)";
+        std::cin >> saveModel;
+    }
+    if (saveModel == 1)
+    {
+        std::cout << "where to save?(filename)";
+        std::cin >> whereToSave;
+    }
+    std::cout << "load model?(1 yes, 0 no)";
+    std::cin >> loadModel;
+    if (loadModel == 1)
+    {
+        std::cout << "where to load?(filename)"; // откуда загружать данные в нейросеть(имя файла)
+        std::cin >> whereToLoad;
+    }
 
     try
     {
@@ -92,20 +117,45 @@ int main(int argc, char **args)
 
         std::cout << "Loaded " << train_images.size() << " training images" << std::endl;
 
-        Network net(topology);
+        Network *net;
+        if (loadModel == 1)
+        {
+            // Загружаем сеть из файла
+            net = Network::loadFromFile(whereToLoad);
+            if (net == nullptr)
+            {
+                throw std::runtime_error("ERROR: cant load model");
+            }
+        }
+        else
+        {
+            // Создаем новую сеть
+            net = new Network(topology);
+        }
 
-        // Здесь можно добавить код для обучения сети
-        // Пример использования:
+        // Используем сеть
         for (size_t i = 0; i < train_images.size(); ++i)
         {
-            net.forward(train_images[i]);
-            net.backprop(train_labels[i]);
+            net->forward(train_images[i]);
+            if (train == 1)
+            {
+                net->backprop(train_labels[i]);
+            }
 
             if (i % 1000 == 0)
             {
                 std::cout << "Processed " << i << " images" << std::endl;
             }
         }
+
+        // Сохраняем модель если нужно
+        if (saveModel == 1)
+        {
+            net->saveToFile(whereToSave);
+        }
+
+        // Освобождаем память
+        delete net;
     }
     catch (const std::exception &e)
     {
