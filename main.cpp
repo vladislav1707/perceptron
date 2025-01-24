@@ -3,6 +3,7 @@
 #include <chrono>
 #include <vector>
 #include <algorithm>
+#include <conio.h>
 #include "perceptron.hpp"
 // #include <fstream>
 
@@ -20,7 +21,12 @@ int getActualDigit(const std::vector<double> &label)
 // Функция для вычисления точности
 double calculateAccuracy(int correct, int total)
 {
-    return (static_cast<double>(correct) / total) * 100.0;
+    double accuracy = 0.0;
+    if (total > 0)
+    {
+        accuracy = (static_cast<double>(correct) / total) * 100.0;
+    }
+    return accuracy;
 }
 
 // Функция для чтения MNIST изображений
@@ -107,31 +113,31 @@ int main(int argc, char **args)
 
     std::cout << "Enter learning rate (recommended range 0.0001 - 0.1): ";
     std::cin >> learningRate;
-    std::cout << "provide training?(1 yes, 0 no)";
+    std::cout << "provide training?(1 yes, 0 no): ";
     std::cin >> train;
     if (train == 1)
     {
-        std::cout << "save new model?(1 yes, 0 no)";
+        std::cout << "save new model?(1 yes, 0 no): ";
         std::cin >> saveModel;
     }
     if (saveModel == 1)
     {
-        std::cout << "where to save?(filename)";
+        std::cout << "where to save?(filename): ";
         std::cin >> whereToSave;
     }
-    std::cout << "load model?(1 yes, 0 no)";
+    std::cout << "load model?(1 yes, 0 no): ";
     std::cin >> loadModel;
     if (loadModel == 1)
     {
-        std::cout << "where to load?(filename)"; // откуда загружать данные в нейросеть(имя файла)
+        std::cout << "where to load?(filename): "; // откуда загружать данные в нейросеть(имя файла)
         std::cin >> whereToLoad;
     }
 
     try
     {
         // Загрузка обучающих данных
-        auto train_images = readMNISTImages("train-images.idx3-ubyte");
-        auto train_labels = readMNISTLabels("train-labels.idx1-ubyte");
+        auto train_images = readMNISTImages("t10k-images.idx3-ubyte");
+        auto train_labels = readMNISTLabels("t10k-labels.idx1-ubyte");
 
         std::cout << "Loaded " << train_images.size() << " training images" << std::endl;
 
@@ -157,9 +163,12 @@ int main(int argc, char **args)
         // Используем сеть
         for (size_t i = 0; i < train_images.size(); ++i)
         {
+            totalPredictions++;
             net->forward(train_images[i]);
             if (getPredictedDigit(net->getOutput()) == getActualDigit(train_labels[i]))
+            {
                 correctPredictions++;
+            }
             double accuracy = calculateAccuracy(correctPredictions, totalPredictions);
             std::cout << "processed " << i << " images. Current accuracy: " << accuracy << "%" << std::endl;
 
@@ -168,9 +177,10 @@ int main(int argc, char **args)
                 net->backprop(train_labels[i]);
             }
 
-            if (i % 1000 == 0)
+            if (i % 100 == 0)
             {
-                std::cout << "Processed " << i << " images" << std::endl;
+                double accuracy = calculateAccuracy(correctPredictions, totalPredictions);
+                std::cout << "\rProcessed " << i << " images. Current accuracy: " << accuracy << "%" << std::flush;
             }
         }
 
@@ -186,8 +196,10 @@ int main(int argc, char **args)
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
+        _getch();
         return 1;
     }
-
+    std::cout << "\nPress any key to exit..." << std::endl;
+    _getch();
     return 0;
 }
