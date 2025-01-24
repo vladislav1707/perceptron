@@ -2,8 +2,26 @@
 #include <random>
 #include <chrono>
 #include <vector>
+#include <algorithm>
 #include "perceptron.hpp"
 // #include <fstream>
+
+// Функция для определения предсказанной цифры
+int getPredictedDigit(const std::vector<double> &output)
+{
+    return std::max_element(output.begin(), output.end()) - output.begin();
+}
+
+// Функция для определения правильной цифры из one-hot encoding
+int getActualDigit(const std::vector<double> &label)
+{
+    return std::max_element(label.begin(), label.end()) - label.begin();
+}
+// Функция для вычисления точности
+double calculateAccuracy(int correct, int total)
+{
+    return (static_cast<double>(correct) / total) * 100.0;
+}
 
 // Функция для чтения MNIST изображений
 std::vector<std::vector<double>> readMNISTImages(const std::string &filename)
@@ -133,10 +151,18 @@ int main(int argc, char **args)
             net = new Network(topology);
         }
 
+        int correctPredictions = 0;
+        int totalPredictions = 0;
+
         // Используем сеть
         for (size_t i = 0; i < train_images.size(); ++i)
         {
             net->forward(train_images[i]);
+            if (getPredictedDigit(net->getOutput()) == getActualDigit(train_labels[i]))
+                correctPredictions++;
+            double accuracy = calculateAccuracy(correctPredictions, totalPredictions);
+            std::cout << "processed " << i << " images. Current accuracy: " << accuracy << "%" << std::endl;
+
             if (train == 1)
             {
                 net->backprop(train_labels[i]);
