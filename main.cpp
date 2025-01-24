@@ -5,9 +5,113 @@
 #include "perceptron.hpp"
 // #include <fstream>
 
+// Функция для чтения MNIST изображений
+std::vector<std::vector<double>> readMNISTImages(const std::string &filename)
+{
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open())
+    {
+        throw std::runtime_error("Cannot open file: " + filename);
+    }
+
+    int magic_number = 0;
+    int number_of_images = 0;
+    int rows = 0;
+    int cols = 0;
+
+    // Чтение заголовка
+    file.read((char *)&magic_number, sizeof(magic_number));
+    file.read((char *)&number_of_images, sizeof(number_of_images));
+    file.read((char *)&rows, sizeof(rows));
+    file.read((char *)&cols, sizeof(cols));
+
+    // Преобразование из big-endian в little-endian
+    magic_number = __builtin_bswap32(magic_number);
+    number_of_images = __builtin_bswap32(number_of_images);
+    rows = __builtin_bswap32(rows);
+    cols = __builtin_bswap32(cols);
+
+    // Чтение данных изображений
+    std::vector<std::vector<double>> images(number_of_images, std::vector<double>(rows * cols));
+    for (int i = 0; i < number_of_images; i++)
+    {
+        for (int j = 0; j < rows * cols; j++)
+        {
+            unsigned char pixel = 0;
+            file.read((char *)&pixel, sizeof(pixel));
+            // Нормализация значений пикселей до диапазона [0, 1]
+            images[i][j] = pixel / 255.0;
+        }
+    }
+
+    return images;
+}
+
+// Функция для чтения MNIST меток
+std::vector<std::vector<double>> readMNISTLabels(const std::string &filename)
+{
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open())
+    {
+        throw std::runtime_error("Cannot open file: " + filename);
+    }
+
+    int magic_number = 0;
+    int number_of_labels = 0;
+
+    // Чтение заголовка
+    file.read((char *)&magic_number, sizeof(magic_number));
+    file.read((char *)&number_of_labels, sizeof(number_of_labels));
+
+    // Преобразование из big-endian в little-endian
+    magic_number = __builtin_bswap32(magic_number);
+    number_of_labels = __builtin_bswap32(number_of_labels);
+
+    // Чтение меток и преобразование в one-hot encoding
+    std::vector<std::vector<double>> labels(number_of_labels, std::vector<double>(10, 0.0));
+    for (int i = 0; i < number_of_labels; i++)
+    {
+        unsigned char label = 0;
+        file.read((char *)&label, sizeof(label));
+        labels[i][label] = 1.0;
+    }
+
+    return labels;
+}
+
 int main(int argc, char **args)
 {
     std::cout << "Enter learning rate (recommended range 0.0001 - 0.1): ";
     std::cin >> learningRate;
-    Network net(topology);
+
+    try
+    {
+        // Загрузка обучающих данных
+        auto train_images = readMNISTImages("train-images.idx3-ubyte");
+        auto train_labels = readMNISTLabels("train-labels.idx1-ubyte");
+
+        std::cout << "Loaded " << train_images.size() << " training images" << std::endl;
+
+        Network net(topology);
+
+        // Здесь можно добавить код для обучения сети
+        // Пример использования:
+        for (size_t i = 0; i < train_images.size(); ++i)
+        {
+            net.forward(train_images[i]);
+            net.backprop(train_labels[i]);
+
+            if (i % 1000 == 0)
+            {
+                std::cout << "Processed " << i << " images" << std::endl;
+            }
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
 }
