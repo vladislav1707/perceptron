@@ -14,7 +14,7 @@ std::uniform_real_distribution<> dis(0.0, 1.0);
 //@ параметры
 const double BIAS = 1.0;
 double learningRate = 0.1;
-std::vector<int> topology = {784, 256, 256, 10}; // нужно эксперементировать, вероятно мне нужно 512 нейронов в скрытых слоях
+std::vector<int> topology = {784, 512, 256, 10}; // нужно эксперементировать, вероятно мне нужно 512 нейронов в скрытых слоях
 
 // Функция активации ReLU
 inline void act(double &value)

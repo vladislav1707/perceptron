@@ -4,7 +4,6 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-#include <conio.h>
 #include "perceptron.hpp"
 
 // Функция для определения предсказанной цифры
@@ -202,11 +201,23 @@ int main(int argc, char **args)
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        _getch();
-        return 1;
+        int exit;
+        std::cout << "\n"
+                  << "write 1 to exit" << std::endl;
+        std::cin >> exit;
+        if (exit == 1)
+        {
+            return 1;
+        }
     }
 
-    std::cout << "\nPress any key to exit..." << std::endl;
-    _getch();
+    int exit;
+    std::cout << "\n"
+              << "write 1 to exit" << "\n";
+    std::cin >> exit;
+    if (exit == 1)
+    {
+        return 1;
+    }
     return 0;
 }
