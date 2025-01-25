@@ -4,6 +4,7 @@
 #include <vector>
 #include <fstream>
 #include <cmath>
+#include <omp.h> // Добавляем заголовок OpenMP
 
 //@ генерация случайных чисел
 std::random_device rd;
@@ -48,14 +49,15 @@ public:
 class Network
 {
 public:
+    int num_threads;
     int layers;
     neuron **neurons;
     double ***weights; // 1 слой, 2 номер нейрона, 3 связь с нейроном в следующем слое
     int *size;         // как topology но для Network
 
-    Network(const std::vector<int> &topology)
+    Network(const std::vector<int> &topology, int threads = 4) : num_threads(threads)
     {
-        // инициализация количества слоев и массива size, который хранит количество нейронов для каждого слоя
+        omp_set_num_threads(num_threads);
         layers = topology.size();
         size = new int[layers];
 
@@ -112,7 +114,7 @@ public:
         }
     }
 
-    // Новый метод для сохранения состояния сети в файл
+    // метод для сохранения состояния сети в файл
     bool saveToFile(const std::string &filename)
     {
         std::ofstream file(filename, std::ios::binary);
@@ -206,6 +208,7 @@ public:
     // Метод прямого распространения
     void forward(const std::vector<double> &input)
     {
+#pragma omp parallel for
         // Установка входных значений (кроме bias)
         for (int i = 0; i < size[0] - 1; i++)
         {
@@ -215,6 +218,7 @@ public:
         // Проход по всем слоям, кроме входного
         for (int layer = 1; layer < layers; layer++)
         {
+#pragma omp parallel for
             // Проход по всем нейронам текущего слоя
             for (int neuron = 0; neuron < size[layer]; neuron++)
             {
@@ -241,6 +245,8 @@ public:
     {
         // 1. Вычисление ошибки для выходного слоя
         int output_layer = layers - 1;
+
+#pragma omp parallel for
         for (int i = 0; i < size[output_layer]; i++)
         {
             double output = neurons[output_layer][i].value;
@@ -251,29 +257,43 @@ public:
         // 2. Обратное распространение ошибки по скрытым слоям
         for (int layer = output_layer - 1; layer >= 0; layer--)
         {
-            for (int i = 0; i < size[layer]; i++)
+
+            const int current_layer = layer;
+
+#pragma omp parallel for
+            for (int i = 0; i < size[current_layer]; i++)
             {
                 double error = 0.0;
                 // Суммируем взвешенные ошибки следующего слоя
-                for (int j = 0; j < size[layer + 1]; j++)
+                for (int j = 0; j < size[current_layer + 1]; j++)
                 {
-                    error += neurons[layer + 1][j].error * weights[layer][i][j];
+                    error += neurons[current_layer + 1][j].error * weights[current_layer][i][j];
                 }
-                neurons[layer][i].error = error * actDerivative(neurons[layer][i].value);
+                neurons[current_layer][i].error = error * actDerivative(neurons[current_layer][i].value);
             }
         }
 
         // 3. Обновление весов
         for (int layer = 0; layer < layers - 1; layer++)
         {
-            for (int i = 0; i < size[layer]; i++)
+            const int current_layer = layer;
+
+#pragma omp parallel for collapse(2)
+            for (int i = 0; i < size[current_layer]; i++)
             {
-                for (int j = 0; j < size[layer + 1]; j++)
+                for (int j = 0; j < size[current_layer + 1]; j++)
                 {
-                    weights[layer][i][j] -= learningRate * neurons[layer][i].value * neurons[layer + 1][j].error;
+                    weights[current_layer][i][j] -= learningRate * neurons[current_layer][i].value * neurons[current_layer + 1][j].error;
                 }
             }
         }
+    }
+
+    // метод управления потоками
+    void setThreads(int threads)
+    {
+        num_threads = threads;
+        omp_set_num_threads(num_threads);
     }
 
     double calculateError(const std::vector<double> &target)

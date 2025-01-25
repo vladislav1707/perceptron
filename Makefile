@@ -1,2 +1,2 @@
 all:
-	g++ -g main.cpp -o main.exe -Wall
+	g++ -fopenmp -g main.cpp -o main.exe -Wall
