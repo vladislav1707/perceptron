@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <conio.h>
 #include "perceptron.hpp"
 
 // Функция для определения предсказанной цифры
@@ -169,7 +170,7 @@ int main(int argc, char **args)
         int totalPredictions = 0;
 
         // Используем сеть
-        for (size_t i = 0; i <= train_images.size(); ++i)
+        for (size_t i = 0; i < train_images.size(); ++i)
         {
             totalPredictions++;
             net->forward(train_images[i]);
@@ -183,14 +184,13 @@ int main(int argc, char **args)
                 correctPredictions++;
             }
 
-            if (i % 1000 == 0)
+            if (i % 1000 == 0 || i == train_images.size() - 1)
             {
                 double accuracy = calculateAccuracy(correctPredictions, totalPredictions);
-                std::cout << "\nProcessed " << i << " images. Current accuracy: " << accuracy << "%";
+                std::cout << "\nProcessed " << (i) << " images. Current accuracy: " << accuracy << "%";
             }
         }
 
-        // Сохраняем модель если нужно
         if (saveModel == 1)
         {
             net->saveToFile(whereToSave);
@@ -202,11 +202,11 @@ int main(int argc, char **args)
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        system("pause");
+        _getch();
         return 1;
     }
 
     std::cout << "\nPress any key to exit..." << std::endl;
-    system("pause");
+    _getch();
     return 0;
 }
