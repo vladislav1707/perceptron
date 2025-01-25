@@ -3,19 +3,20 @@
 #include <chrono>
 #include <vector>
 #include <fstream>
+#include <cmath>
 
-//@ random number generator
+//@ генерация случайных чисел
 std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_real_distribution<> dis(0.0, 1.0);
 
-//@ parameters
+//@ параметры
 const double BIAS = 1.0;
-double learningRate = 0.01;
+double learningRate = 0.1;
 std::vector<int> topology = {784, 256, 256, 10}; // нужно эксперементировать, вероятно мне нужно 512 нейронов в скрытых слоях
 
 // Функция активации ReLU
-void act(double &value)
+inline void act(double &value)
 {
     if (value < 0)
     {
@@ -24,7 +25,7 @@ void act(double &value)
     // иначе все остается как есть
 }
 // Производная ReLU
-double actDerivative(double value)
+inline double actDerivative(double value)
 {
     if (value > 0)
     {
@@ -41,6 +42,7 @@ struct neuron
 public:
     double value = 0.0;
     double error = 0.0;
+    bool isBias = false;
 };
 
 class Network
@@ -55,32 +57,56 @@ public:
     {
         // инициализация количества слоев и массива size, который хранит количество нейронов для каждого слоя
         layers = topology.size();
-
         size = new int[layers];
+
         for (int i = 0; i < layers; i++)
         {
-            size[i] = topology[i];
+            if (i < layers - 1)
+            {
+                size[i] = topology[i] + 1; // +1 под bias в каждом скрытом слое
+            }
+            else
+            {
+                size[i] = topology[i]; // выходной слой без bias
+            }
         }
 
         // создание нейронов
         neurons = new neuron *[layers];
         for (int i = 0; i < layers; i++)
         {
-            neurons[i] = new neuron[topology[i]];
+            neurons[i] = new neuron[size[i]];
+            if (i < layers - 1) // Устанавливаем bias только для не выходных слоев
+            {
+                neurons[i][size[i] - 1].value = BIAS;
+                neurons[i][size[i] - 1].isBias = true;
+            }
         }
 
         // создание весов
         weights = new double **[layers - 1];
         for (int i = 0; i < layers - 1; i++)
         {
-            weights[i] = new double *[topology[i]];
-            for (int j = 0; j < topology[i]; j++)
+            weights[i] = new double *[size[i]];
+            for (int j = 0; j < size[i]; j++)
             {
-                weights[i][j] = new double[topology[i + 1]];
+                weights[i][j] = new double[size[i + 1]];
                 // заполнение случайными значение от 0 до 1
-                for (int k = 0; k < topology[i + 1]; k++)
+                // Инициализация весов только не для bias нейронов
+                if (!neurons[i][j].isBias)
                 {
-                    weights[i][j][k] = dis(gen) * sqrt(2.0 / size[i]); // реализация инициализации весов He
+                    for (int k = 0; k < size[i + 1]; k++)
+                    {
+                        weights[i][j][k] = dis(gen) * sqrt(2.0 / size[i]); // реализация инициализации весов He
+                    }
+                }
+                else
+                {
+                    // Для bias нейрона устанавливаем специальные веса
+                    for (int k = 0; k < size[i + 1]; k++)
+                    {
+                        weights[i][j][k] = dis(gen) * 0.1; // Меньшие начальные веса для bias
+                    }
                 }
             }
         }
@@ -180,8 +206,8 @@ public:
     // Метод прямого распространения
     void forward(const std::vector<double> &input)
     {
-        // Установка входных значений
-        for (int i = 0; i < size[0]; i++)
+        // Установка входных значений (кроме bias)
+        for (int i = 0; i < size[0] - 1; i++)
         {
             neurons[0][i].value = input[i];
         }
@@ -192,20 +218,20 @@ public:
             // Проход по всем нейронам текущего слоя
             for (int neuron = 0; neuron < size[layer]; neuron++)
             {
-                double sum = 0;
-
-                // Вычисление взвешенной суммы
-                for (int prev = 0; prev < size[layer - 1]; prev++)
+                if (!neurons[layer][neuron].isBias) // проверка чтобы нейрон не был bias
                 {
-                    sum += neurons[layer - 1][prev].value * weights[layer - 1][prev][neuron];
+                    double sum = 0;
+
+                    // Вычисление взвешенной суммы
+                    for (int prev = 0; prev < size[layer - 1]; prev++)
+                    {
+                        sum += neurons[layer - 1][prev].value * weights[layer - 1][prev][neuron];
+                    }
+
+                    // Применение функции активации
+                    neurons[layer][neuron].value = sum;
+                    act(neurons[layer][neuron].value);
                 }
-
-                // Добавление bias
-                sum += BIAS;
-
-                // Применение функции активации
-                neurons[layer][neuron].value = sum;
-                act(neurons[layer][neuron].value);
             }
         }
     }
@@ -223,7 +249,7 @@ public:
         }
 
         // 2. Обратное распространение ошибки по скрытым слоям
-        for (int layer = output_layer - 1; layer > 0; layer--)
+        for (int layer = output_layer - 1; layer >= 0; layer--)
         {
             for (int i = 0; i < size[layer]; i++)
             {
