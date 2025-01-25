@@ -15,18 +15,17 @@ std::uniform_real_distribution<> dis(0.0, 1.0);
 const double BIAS = 1.0;
 double learningRate = 0.1;
 std::vector<int> topology = {784, 512, 256, 10}; // нужно эксперементировать, вероятно мне нужно 512 нейронов в скрытых слоях
-const double LEAK_FACTOR = 0.01;
 
-// Функция активации Leaky ReLU
+// Функция активации ReLU
 inline void act(double &value)
 {
     if (value < 0)
     {
-        value *= LEAK_FACTOR;
+        value = 0;
     }
-    // для положительных значений оставляем как есть
+    // иначе все остается как есть
 }
-// Производная Leaky ReLU
+// Производная ReLU
 inline double actDerivative(double value)
 {
     if (value > 0)
@@ -35,7 +34,7 @@ inline double actDerivative(double value)
     }
     else
     {
-        return LEAK_FACTOR;
+        return 0.0;
     }
 }
 
