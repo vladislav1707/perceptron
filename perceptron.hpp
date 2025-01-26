@@ -7,7 +7,7 @@
 #include <vector>
 #include <fstream>
 #include <cmath>
-#include <omp.h> // Добавляем заголовок OpenMP
+#include <omp.h>
 
 //@ генерация случайных чисел
 std::random_device rd;
@@ -15,21 +15,23 @@ std::mt19937 gen(rd());
 std::uniform_real_distribution<> dis(0.0, 1.0);
 
 //@ параметры
+const double GRADIENT_CLIP = 1.0; // Ограничение градиента
 const double BIAS = 1.0;
-double learningRate = 0.1;
+double learningRate = 0.01;
+const double LEAK_FACTOR = 0.01; // Фактор утечки для Leaky ReLU
 
-// Функция активации ReLU
-inline void act(double &value)
+// Функция активации leaky ReLU
+inline void lReLU(double &value)
 {
     if (value < 0)
     {
-        value = 0;
+        value = LEAK_FACTOR * value; // Коэффициент наклона 0.01 для отрицательных значений
     }
-    // иначе все остается как есть
+    // для положительных значений оставляем как есть
 }
 
-// Производная ReLU
-inline double actDerivative(double value)
+// Производная(deriviate) leaky ReLU
+inline double lReLUDer(double value)
 {
     if (value > 0)
     {
@@ -37,8 +39,18 @@ inline double actDerivative(double value)
     }
     else
     {
-        return 0.0;
+        return LEAK_FACTOR; // Производная для отрицательной части
     }
+}
+
+// Функция для ограничения градиента
+inline double clipGradient(double gradient)
+{
+    if (gradient > GRADIENT_CLIP)
+        return GRADIENT_CLIP;
+    if (gradient < -GRADIENT_CLIP)
+        return -GRADIENT_CLIP;
+    return gradient;
 }
 
 struct neuron
@@ -96,13 +108,14 @@ public:
             for (int j = 0; j < size[i]; j++)
             {
                 weights[i][j] = new double[size[i + 1]];
+                double scale = sqrt(2.0 / (size[i] * (1 + LEAK_FACTOR * LEAK_FACTOR)));
                 // заполнение случайными значение от 0 до 1
                 // Инициализация весов только не для bias нейронов
                 if (!neurons[i][j].isBias)
                 {
                     for (int k = 0; k < size[i + 1]; k++)
                     {
-                        weights[i][j][k] = dis(gen) * sqrt(2.0 / size[i]); // реализация инициализации весов He
+                        weights[i][j][k] = dis(gen) * scale; // реализация инициализации весов He
                     }
                 }
                 else
@@ -110,7 +123,7 @@ public:
                     // Для bias нейрона устанавливаем специальные веса
                     for (int k = 0; k < size[i + 1]; k++)
                     {
-                        weights[i][j][k] = dis(gen) * 0.1; // Меньшие начальные веса для bias
+                        weights[i][j][k] = dis(gen) * 0.01; // Меньшие начальные веса для bias
                     }
                 }
             }
@@ -159,7 +172,7 @@ public:
         return true;
     }
 
-    // Новый метод для загрузки состояния сети из файла
+    // метод для загрузки состояния сети из файла
     static Network *loadFromFile(const std::string &filename)
     {
         std::ifstream file(filename, std::ios::binary);
@@ -237,7 +250,7 @@ public:
 
                     // Применение функции активации
                     neurons[layer][neuron].value = sum;
-                    act(neurons[layer][neuron].value);
+                    lReLU(neurons[layer][neuron].value);
                 }
             }
         }
@@ -254,7 +267,9 @@ public:
         {
             double output = neurons[output_layer][i].value;
             // Производная квадратичной функции потерь
-            neurons[output_layer][i].error = (output - target[i]) * actDerivative(output);
+            // Обновление весов с ограничением градиента
+            double error = (output - target[i]) * lReLUDer(output);
+            neurons[output_layer][i].error = clipGradient(error);
         }
 
         // 2. Обратное распространение ошибки по скрытым слоям
@@ -272,7 +287,7 @@ public:
                 {
                     error += neurons[current_layer + 1][j].error * weights[current_layer][i][j];
                 }
-                neurons[current_layer][i].error = error * actDerivative(neurons[current_layer][i].value);
+                neurons[current_layer][i].error = error * lReLUDer(neurons[current_layer][i].value);
             }
         }
 

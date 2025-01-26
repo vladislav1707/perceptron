@@ -62,7 +62,7 @@ std::vector<std::vector<double>> readMNISTImages(const std::string &filename)
             unsigned char pixel = 0;
             file.read((char *)&pixel, sizeof(pixel));
             // Нормализация значений пикселей до диапазона [0, 1]
-            images[i][j] = pixel / 255.0;
+            images[i][j] = static_cast<double>(pixel) / 255.0;
         }
     }
 
@@ -88,6 +88,11 @@ std::vector<std::vector<double>> readMNISTLabels(const std::string &filename)
     // Преобразование из big-endian в little-endian
     magic_number = __builtin_bswap32(magic_number);
     number_of_labels = __builtin_bswap32(number_of_labels);
+
+    if (magic_number != 2049)
+    {
+        throw std::runtime_error("Invalid MNIST image file format");
+    }
 
     // Чтение меток и преобразование в one-hot encoding
     std::vector<std::vector<double>> labels(number_of_labels, std::vector<double>(10, 0.0));
