@@ -1,3 +1,6 @@
+#ifndef PERCEPTRON_HPP
+#define PERCEPTRON_HPP
+
 #include <iostream>
 #include <random>
 #include <chrono>
@@ -14,7 +17,6 @@ std::uniform_real_distribution<> dis(0.0, 1.0);
 //@ параметры
 const double BIAS = 1.0;
 double learningRate = 0.1;
-std::vector<int> topology = {784, 512, 256, 10}; // нужно эксперементировать, вероятно мне нужно 512 нейронов в скрытых слоях
 
 // Функция активации ReLU
 inline void act(double &value)
@@ -25,6 +27,7 @@ inline void act(double &value)
     }
     // иначе все остается как есть
 }
+
 // Производная ReLU
 inline double actDerivative(double value)
 {
@@ -342,3 +345,5 @@ public:
         delete[] size;
     }
 };
+
+#endif

@@ -6,6 +6,8 @@
 #include <fstream>
 #include "perceptron.hpp"
 
+const std::vector<int> topology = {784, 128, 64, 10};
+
 // Функция для определения предсказанной цифры
 int getPredictedDigit(const std::vector<double> &output)
 {
@@ -167,12 +169,19 @@ int main(int argc, char **args)
 
         int correctPredictions = 0;
         int totalPredictions = 0;
+        double totalError = 0.0;
+        double avgError = 0.0;
 
         // Используем сеть
         for (size_t i = 0; i < train_images.size(); ++i)
         {
             totalPredictions++;
             net->forward(train_images[i]);
+
+            double currentError = net->calculateError(train_labels[i]);
+            totalError += currentError;
+            avgError = totalError / totalPredictions;
+
             if (train == 1)
             {
                 net->backprop(train_labels[i]);
@@ -186,7 +195,9 @@ int main(int argc, char **args)
             if (i % 1000 == 0 || i == train_images.size() - 1)
             {
                 double accuracy = calculateAccuracy(correctPredictions, totalPredictions);
-                std::cout << "\nProcessed " << (i) << " images. Current accuracy: " << accuracy << "%";
+                std::cout << "\n\nProcessed " << (i) << " images."
+                          << "\nCurrent accuracy: " << accuracy << "%"
+                          << "\nAverage error: " << avgError;
             }
         }
 
