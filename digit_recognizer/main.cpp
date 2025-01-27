@@ -4,7 +4,12 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-#include "perceptron.hpp"
+#include "..\perceptron.hpp"
+
+double NetConfig::GRADIENT_CLIP = 1.0;
+double NetConfig::BIAS = 1.0;
+double NetConfig::learningRate = 0.01;
+double NetConfig::LEAK_FACTOR = 0.01;
 
 const std::vector<int> topology = {784, 128, 64, 10};
 

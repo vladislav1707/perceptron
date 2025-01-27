@@ -9,28 +9,40 @@
 #include <cmath>
 #include <omp.h>
 
+class NetConfig
+{
+public:
+    static double GRADIENT_CLIP;
+    static double BIAS;
+    static double learningRate;
+    static double LEAK_FACTOR;
+
+    static void setParameters(double gradient_clip, double bias_value,
+                              double learning_rate, double leak_factor)
+    {
+        GRADIENT_CLIP = gradient_clip; // gradient_clip
+        BIAS = bias_value;             // bias
+        learningRate = learning_rate;  // learning_rate
+        LEAK_FACTOR = leak_factor;     // leak_factor
+    }
+};
+
 //@ генерация случайных чисел
 std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_real_distribution<> dis(0.0, 1.0);
 
-//@ параметры
-const double GRADIENT_CLIP = 1.0; // Ограничение градиента
-const double BIAS = 1.0;
-double learningRate = 0.01;
-const double LEAK_FACTOR = 0.01; // Фактор утечки для Leaky ReLU
-
-// Функция активации leaky ReLU
+//@ Функция активации leaky ReLU
 inline void lReLU(double &value)
 {
     if (value < 0)
     {
-        value = LEAK_FACTOR * value; // Коэффициент наклона 0.01 для отрицательных значений
+        value = NetConfig::LEAK_FACTOR * value; // Коэффициент наклона 0.01 для отрицательных значений
     }
     // для положительных значений оставляем как есть
 }
 
-// Производная(deriviate) leaky ReLU
+//@ Производная(deriviate) leaky ReLU
 inline double lReLUDer(double value)
 {
     if (value > 0)
@@ -39,17 +51,17 @@ inline double lReLUDer(double value)
     }
     else
     {
-        return LEAK_FACTOR; // Производная для отрицательной части
+        return NetConfig::LEAK_FACTOR; // Производная для отрицательной части
     }
 }
 
-// Функция для ограничения градиента
+//@ Функция для ограничения градиента
 inline double clipGradient(double gradient)
 {
-    if (gradient > GRADIENT_CLIP)
-        return GRADIENT_CLIP;
-    if (gradient < -GRADIENT_CLIP)
-        return -GRADIENT_CLIP;
+    if (gradient > NetConfig::GRADIENT_CLIP)
+        return NetConfig::GRADIENT_CLIP;
+    if (gradient < -NetConfig::GRADIENT_CLIP)
+        return -NetConfig::GRADIENT_CLIP;
     return gradient;
 }
 
@@ -88,19 +100,19 @@ public:
             }
         }
 
-        // создание нейронов
+        //@ создание нейронов
         neurons = new neuron *[layers];
         for (int i = 0; i < layers; i++)
         {
             neurons[i] = new neuron[size[i]];
             if (i < layers - 1) // Устанавливаем bias только для не выходных слоев
             {
-                neurons[i][size[i] - 1].value = BIAS;
+                neurons[i][size[i] - 1].value = NetConfig::BIAS;
                 neurons[i][size[i] - 1].isBias = true;
             }
         }
 
-        // создание весов
+        //@ создание весов
         weights = new double **[layers - 1];
         for (int i = 0; i < layers - 1; i++)
         {
@@ -108,7 +120,7 @@ public:
             for (int j = 0; j < size[i]; j++)
             {
                 weights[i][j] = new double[size[i + 1]];
-                double scale = sqrt(2.0 / (size[i] * (1 + LEAK_FACTOR * LEAK_FACTOR)));
+                double scale = sqrt(2.0 / (size[i] * (1 + NetConfig::LEAK_FACTOR * NetConfig::LEAK_FACTOR)));
                 // заполнение случайными значение от 0 до 1
                 // Инициализация весов только не для bias нейронов
                 if (!neurons[i][j].isBias)
@@ -301,7 +313,7 @@ public:
             {
                 for (int j = 0; j < size[current_layer + 1]; j++)
                 {
-                    weights[current_layer][i][j] -= learningRate * neurons[current_layer][i].value * neurons[current_layer + 1][j].error;
+                    weights[current_layer][i][j] -= NetConfig::learningRate * neurons[current_layer][i].value * neurons[current_layer + 1][j].error;
                 }
             }
         }
