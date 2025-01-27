@@ -343,10 +343,7 @@ public:
         forward(state);
         std::vector<double> currentQ = getOutput();
 
-        // 2) Сохраняем Q(s,a)
-        double oldValue = currentQ[action];
-
-        // 3) Если эпизод не завершен, моделируем следующее состояние
+        // 2) Если эпизод не завершен, моделируем следующее состояние
         double nextMax = 0.0;
         if (!done)
         {
@@ -355,13 +352,13 @@ public:
             nextMax = *std::max_element(nextQ.begin(), nextQ.end());
         }
 
-        // 4) Вычисляем целевое значение
+        // 3) Вычисляем целевое значение
         double updatedValue = reward + gamma * nextMax;
 
-        // 5) Подготовливаем таргет (все выходы = текущие Q, кроме action)
+        // 4) Подготовливаем таргет (все выходы = текущие Q, кроме action)
         currentQ[action] = updatedValue;
 
-        // 6) Вызываем уже готовый backprop с таргетом
+        // 5) Вызываем уже готовый backprop с таргетом
         backprop(currentQ);
     }
 
