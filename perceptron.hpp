@@ -8,6 +8,7 @@
 #include <fstream>
 #include <cmath>
 #include <omp.h>
+#include <algorithm>
 
 class NetConfig
 {
@@ -317,6 +318,51 @@ public:
                 }
             }
         }
+    }
+
+    // --------------------------------------------------------
+    //   реализация Q-обучения
+    // --------------------------------------------------------
+    // Предполагается, что сеть умеет выдавать Q-значения
+    // во всех выходных нейронах (по одному на каждое действие).
+    // Здесь:
+    //   state      - текущее состояние среды (вектор входа)
+    //   action     - индекс действия, которое мы применили
+    //   reward     - полученная награда
+    //   nextState  - новое состояние после действия
+    //   done       - флаг конца эпизода
+    //   gamma      - коэффициент дисконтирования
+    void qLearn(const std::vector<double> &state,
+                int action,
+                double reward,
+                const std::vector<double> &nextState,
+                bool done,
+                double gamma = 0.99)
+    {
+        // 1) Прямой проход (forward) для текущего состояния
+        forward(state);
+        std::vector<double> currentQ = getOutput();
+
+        // 2) Сохраняем Q(s,a)
+        double oldValue = currentQ[action];
+
+        // 3) Если эпизод не завершен, моделируем следующее состояние
+        double nextMax = 0.0;
+        if (!done)
+        {
+            forward(nextState);
+            std::vector<double> nextQ = getOutput();
+            nextMax = *std::max_element(nextQ.begin(), nextQ.end());
+        }
+
+        // 4) Вычисляем целевое значение
+        double updatedValue = reward + gamma * nextMax;
+
+        // 5) Подготовливаем таргет (все выходы = текущие Q, кроме action)
+        currentQ[action] = updatedValue;
+
+        // 6) Вызываем уже готовый backprop с таргетом
+        backprop(currentQ);
     }
 
     // метод управления потоками
