@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-#include "..\perceptron.hpp"
+#include "../perceptron.hpp"
 
 double NetConfig::GRADIENT_CLIP = 1.0;
 double NetConfig::BIAS = 1.0;

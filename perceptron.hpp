@@ -21,10 +21,11 @@ public:
     static void setParameters(double gradient_clip, double bias_value,
                               double learning_rate, double leak_factor)
     {
-        GRADIENT_CLIP = gradient_clip; // gradient_clip
-        BIAS = bias_value;             // bias
-        learningRate = learning_rate;  // learning_rate
-        LEAK_FACTOR = leak_factor;     // leak_factor
+        // в скобках желательные значения(можно менять)
+        GRADIENT_CLIP = gradient_clip; // gradient_clip(1.0)
+        BIAS = bias_value;             // bias(1.0)
+        learningRate = learning_rate;  // learning_rate(0.01)
+        LEAK_FACTOR = leak_factor;     // leak_factor(0.01)
     }
 };
 
