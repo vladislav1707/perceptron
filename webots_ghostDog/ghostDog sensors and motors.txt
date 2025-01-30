@@ -13,10 +13,10 @@ neck1
 head
 hip0
 knee0
-hip2
-knee2
 hip1
 knee1
+hip2
+knee2
 hip3
 knee3
 spine

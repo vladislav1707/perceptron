@@ -29,10 +29,10 @@ class robotController
                                            "head",
                                            "hip0",
                                            "knee0",
-                                           "hip2",
-                                           "knee2",
                                            "hip1",
                                            "knee1",
+                                           "hip2",
+                                           "knee2",
                                            "hip3",
                                            "knee3",
                                            "spine"};
@@ -42,4 +42,24 @@ int main(int argc, char **args)
 {
     Robot robot;
     Network net(topology, 4);
+    // Инициализация всех моторов
+    Motor *neck0 = robot.getMotor("neck0");
+    Motor *neck1 = robot.getMotor("neck1");
+    Motor *head = robot.getMotor("head");
+    Motor *hip0 = robot.getMotor("hip0");
+    Motor *knee0 = robot.getMotor("knee0");
+    Motor *hip2 = robot.getMotor("hip1");
+    Motor *knee2 = robot.getMotor("knee1");
+    Motor *hip1 = robot.getMotor("hip2");
+    Motor *knee1 = robot.getMotor("knee2");
+    Motor *hip3 = robot.getMotor("hip3");
+    Motor *knee3 = robot.getMotor("knee3");
+    Motor *spine = robot.getMotor("spine");
+
+    // указатели на моторы
+    std::vector<Motor *> motors = {
+        neck0, neck1, head,
+        hip0, knee0, hip1,
+        knee1, hip2, knee2,
+        hip3, knee3, spine};
 }
