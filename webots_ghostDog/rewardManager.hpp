@@ -1,9 +1,9 @@
 #ifndef REWARD_MANAGER_HPP
 #define REWARD_MANAGER_HPP
 
-#include <webots/Supervisor.hpp>
-#include <webots/Node.hpp>
-#include <webots/Field.hpp>
+#include <C:/Program Files/Webots/include/controller/cpp/webots/Supervisor.hpp>
+#include <C:/Program Files/Webots/include/controller/cpp/webots/Node.hpp>
+#include <C:/Program Files/Webots/include/controller/cpp/webots/Field.hpp>
 #include <random>
 #include <cmath>
 #include <string>

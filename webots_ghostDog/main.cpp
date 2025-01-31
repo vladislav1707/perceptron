@@ -1,8 +1,8 @@
-#include <webots/Robot.hpp>
-#include <webots/Motor.hpp>
-#include <webots/Gyro.hpp>
-#include <webots/PositionSensor.hpp>
-#include <webots/TouchSensor.hpp>
+#include <C:/Program Files/Webots/include/controller/cpp/webots/Robot.hpp>
+#include <C:/Program Files/Webots/include/controller/cpp/webots/Motor.hpp>
+#include <C:/Program Files/Webots/include/controller/cpp/webots/Gyro.hpp>
+#include <C:/Program Files/Webots/include/controller/cpp/webots/PositionSensor.hpp>
+#include <C:/Program Files/Webots/include/controller/cpp/webots/TouchSensor.hpp>
 #include "../perceptron.hpp"
 #include "rewardManager.hpp"
 

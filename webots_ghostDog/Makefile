@@ -1,2 +1,2 @@
 all:
-	g++ -fopenmp -g main.cpp -o main.exe -Wall
+	g++ -lController -lCppController -fopenmp -g main.cpp -o main.exe -Wall -std=c++17
