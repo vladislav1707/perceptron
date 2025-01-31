@@ -92,7 +92,6 @@ std::vector<double> getRobotState(const std::vector<TouchSensor *> &touchSensors
 
 int main(int argc, char **args)
 {
-    Robot robot;
     Supervisor supervisor;
     RewardManager rewardManager(&supervisor);
     Network net(topology, 4);
@@ -101,7 +100,7 @@ int main(int argc, char **args)
     std::vector<Motor *> motors;
     for (const auto &motorName : RobotConfig::motorNames)
     {
-        Motor *motor = robot.getMotor(motorName);
+        Motor *motor = supervisor.getMotor(motorName);
         motors.push_back(motor);
 
         // Включаем позиционный сенсор для каждого мотора
@@ -114,14 +113,14 @@ int main(int argc, char **args)
     }
 
     // Инициализация гироскопа
-    Gyro *gyro = robot.getGyro("gyro");
+    Gyro *gyro = supervisor.getGyro("gyro");
     gyro->enable(RobotConfig::TIME_STEP);
 
     // Инициализация сенсоров касания
-    TouchSensor *touch0 = robot.getTouchSensor("touch0");
-    TouchSensor *touch1 = robot.getTouchSensor("touch1");
-    TouchSensor *touch2 = robot.getTouchSensor("touch2");
-    TouchSensor *touch3 = robot.getTouchSensor("touch3");
+    TouchSensor *touch0 = supervisor.getTouchSensor("touch0");
+    TouchSensor *touch1 = supervisor.getTouchSensor("touch1");
+    TouchSensor *touch2 = supervisor.getTouchSensor("touch2");
+    TouchSensor *touch3 = supervisor.getTouchSensor("touch3");
 
     // Включение сенсоров касания
     touch0->enable(RobotConfig::TIME_STEP);
@@ -146,7 +145,7 @@ int main(int argc, char **args)
     // первая награда
     rewardManager.spawnNewReward();
 
-    while (robot.step(RobotConfig::TIME_STEP) != -1)
+    while (supervisor.step(RobotConfig::TIME_STEP) != -1)
     {
         // Получаем текущее состояние робота
         std::vector<double> currentState = getRobotState(touchSensors, gyro, motors, rewardManager);
