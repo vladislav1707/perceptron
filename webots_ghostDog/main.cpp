@@ -1,8 +1,9 @@
-#include <C:/Program Files/Webots/include/controller/cpp/webots/Robot.hpp>
-#include <C:/Program Files/Webots/include/controller/cpp/webots/Motor.hpp>
-#include <C:/Program Files/Webots/include/controller/cpp/webots/Gyro.hpp>
-#include <C:/Program Files/Webots/include/controller/cpp/webots/PositionSensor.hpp>
-#include <C:/Program Files/Webots/include/controller/cpp/webots/TouchSensor.hpp>
+#include <webots/Robot.hpp>
+#include <webots/Motor.hpp>
+#include <webots/Gyro.hpp>
+#include <webots/PositionSensor.hpp>
+#include <webots/TouchSensor.hpp>
+#include <webots/Supervisor.hpp>
 #include "../perceptron.hpp"
 #include "rewardManager.hpp"
 
@@ -37,23 +38,18 @@ public:
     static const int SENSOR_SAMPLING_PERIOD = TIME_STEP; // Частота опроса сенсоров
 
     // Конфигурация моторов
-    static const inline std::vector<std::string> motorNames = {"neck0",
-                                                               "neck1",
-                                                               "head",
-                                                               "hip0",
-                                                               "knee0",
-                                                               "hip1",
-                                                               "knee1",
-                                                               "hip2",
-                                                               "knee2",
-                                                               "hip3",
-                                                               "knee3",
-                                                               "spine"};
+    static const std::string MOTOR_NAMES[12];
 
     // Конфигурация сенсоров касания
-    static const inline std::vector<std::string> TOUCH_SENSOR_NAMES = {
-        "touch0", "touch1", "touch2", "touch3"};
+    static const std::string TOUCH_SENSOR_NAMES[4];
 };
+
+// Определение статических членов класса
+const std::string RobotConfig::MOTOR_NAMES[12] = {
+    "neck0", "neck1", "head", "hip0", "knee0", "hip1", "knee1", "hip2", "knee2", "hip3", "knee3", "spine"};
+
+const std::string RobotConfig::TOUCH_SENSOR_NAMES[4] = {
+    "touch0", "touch1", "touch2", "touch3"};
 
 // Вспомогательная функция для получения состояния робота
 std::vector<double> getRobotState(const std::vector<TouchSensor *> &touchSensors,
@@ -98,7 +94,7 @@ int main(int argc, char **args)
 
     // Инициализация всех моторов
     std::vector<Motor *> motors;
-    for (const auto &motorName : RobotConfig::motorNames)
+    for (const auto &motorName : RobotConfig::MOTOR_NAMES)
     {
         Motor *motor = supervisor.getMotor(motorName);
         motors.push_back(motor);
@@ -167,9 +163,12 @@ int main(int argc, char **args)
             action = std::distance(currentQ.begin(), std::max_element(currentQ.begin(), currentQ.end()));
         }
 
-        // Применяем выбранное действие к моторам
-        double velocity = currentQ[action] * MAX_VELOCITY;
-        motors[action]->setVelocity(velocity);
+        // Устанавливаем скорость для всех моторов на основе выходов сети
+        for (size_t i = 0; i < motors.size(); i++)
+        {
+            double velocity = currentQ[i] * MAX_VELOCITY;
+            motors[i]->setVelocity(velocity);
+        }
 
         // Получаем награду и проверяем столкновение
         bool done = rewardManager.checkCollision();
@@ -180,6 +179,18 @@ int main(int argc, char **args)
 
         // Обновляем сеть с использованием Q-обучения
         net.qLearn(currentState, action, reward, nextState, done);
+
+        // Сброс среды при столкновении с наградой
+        if (done)
+        {
+            supervisor.simulationReset();
+            supervisor.simulationResetPhysics();
+            rewardManager.spawnNewReward();
+        }
+
+        // Получаем узел робота и поле "rotation"
+        // Node *robotNode = supervisor.getSelf();
+        // Field *rotationField = robotNode->getField("rotation");
 
         // Выводим текущий счет
         std::cout << rewardManager.getScore() << std::endl;

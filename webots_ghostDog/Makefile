@@ -5,15 +5,14 @@ OPENMP_FLAGS = -fopenmp
 
 # Пути к Webots
 WEBOTS_HOME ?= "C:/Program Files/Webots"
-WEBOTS_INCLUDE = $(WEBOTS_HOME)/include/controller/cpp
 WEBOTS_LIB = $(WEBOTS_HOME)/lib/controller
 
 # Включаем пути к заголовочным файлам и библиотекам
-INCLUDES = -I"$(WEBOTS_INCLUDE)"
+INCLUDES = -I"C:/Program Files/Webots/include/controller/cpp" -I"C:/Program Files/Webots/include/controller/c" -I"C:/Program Files/Webots/include/webots"
 LIBS = -L"$(WEBOTS_LIB)" -lController -lCppController -lgomp
 
 # Цель сборки
-TARGET = main.exe
+TARGET = Q-learning_AI.exe
 SRCS = main.cpp
 OBJS = $(SRCS:.cpp=.o)
 
