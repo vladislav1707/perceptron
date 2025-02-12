@@ -7,7 +7,6 @@
 #include <vector>
 #include <fstream>
 #include <cmath>
-#include <omp.h>
 #include <algorithm>
 
 class NetConfig
@@ -84,9 +83,8 @@ public:
     double ***weights; // 1 слой, 2 номер нейрона, 3 связь с нейроном в следующем слое
     int *size;         // как topology но для Network
 
-    Network(const std::vector<int> &topology, int threads = 4) : num_threads(threads)
+    Network(const std::vector<int> &topology)
     {
-        omp_set_num_threads(num_threads);
         layers = topology.size();
         size = new int[layers];
 
@@ -238,7 +236,6 @@ public:
     // Метод прямого распространения
     void forward(const std::vector<double> &input)
     {
-#pragma omp parallel for
         // Установка входных значений (кроме bias)
         for (int i = 0; i < size[0] - 1; i++)
         {
@@ -248,7 +245,6 @@ public:
         // Проход по всем слоям, кроме входного
         for (int layer = 1; layer < layers; layer++)
         {
-#pragma omp parallel for
             // Проход по всем нейронам текущего слоя
             for (int neuron = 0; neuron < size[layer]; neuron++)
             {
@@ -276,7 +272,6 @@ public:
         // 1. Вычисление ошибки для выходного слоя
         int output_layer = layers - 1;
 
-#pragma omp parallel for
         for (int i = 0; i < size[output_layer]; i++)
         {
             double output = neurons[output_layer][i].value;
@@ -292,7 +287,6 @@ public:
 
             const int current_layer = layer;
 
-#pragma omp parallel for
             for (int i = 0; i < size[current_layer]; i++)
             {
                 double error = 0.0;
@@ -310,7 +304,6 @@ public:
         {
             const int current_layer = layer;
 
-#pragma omp parallel for collapse(2)
             for (int i = 0; i < size[current_layer]; i++)
             {
                 for (int j = 0; j < size[current_layer + 1]; j++)
@@ -361,13 +354,6 @@ public:
 
         // 5) Вызываем уже готовый backprop с таргетом
         backprop(currentQ);
-    }
-
-    // метод управления потоками
-    void setThreads(int threads)
-    {
-        num_threads = threads;
-        omp_set_num_threads(num_threads);
     }
 
     double calculateError(const std::vector<double> &target)

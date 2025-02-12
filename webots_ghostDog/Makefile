@@ -1,7 +1,6 @@
 # Компилятор и флаги
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -g
-OPENMP_FLAGS = -fopenmp
 
 # Пути к Webots
 WEBOTS_HOME ?= "C:/Program Files/Webots"
