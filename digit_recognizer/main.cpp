@@ -174,7 +174,7 @@ int main(int argc, char **args)
         else
         {
             // Создаем новую сеть
-            net = new Network(topology, 4);
+            net = new Network(topology);
         }
 
         int correctPredictions = 0;
