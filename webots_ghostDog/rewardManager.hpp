@@ -58,9 +58,9 @@ public:
                                              rewardNode(nullptr),
                                              rewardSize(0.1),
                                              spawnRadius(2.0),
+                                             score(0),
                                              gen(rd()),
-                                             dis(-spawnRadius, spawnRadius),
-                                             score(0)
+                                             dis(-spawnRadius, spawnRadius)
     {
         if (!supervisor)
         {
