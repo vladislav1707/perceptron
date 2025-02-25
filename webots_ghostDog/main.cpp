@@ -90,7 +90,7 @@ int main(int argc, char **args)
 {
     Supervisor supervisor;
     RewardManager rewardManager(&supervisor);
-    Network net(topology, 4);
+    Network net(topology);
 
     // Инициализация всех моторов
     std::vector<Motor *> motors;

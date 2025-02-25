@@ -14,9 +14,9 @@ private:
     webots::Supervisor *supervisor;
     webots::Node *robotNode;
     webots::Node *rewardNode;
-    double spawnRadius = 2.0; // Максимальное расстояние от робота для спавна награды
-    double rewardSize = 0.1;  // Размер награды
-    int score = 0;
+    double rewardSize;  // Размер награды
+    double spawnRadius; // Максимальное расстояние от робота для спавна награды
+    int score;
 
     // Генератор случайных чисел
     std::random_device rd;
@@ -53,10 +53,26 @@ private:
     }
 
 public:
-    RewardManager(webots::Supervisor *sup) : supervisor(sup), gen(rd())
+    RewardManager(webots::Supervisor *sup) : supervisor(sup),
+                                             robotNode(nullptr),
+                                             rewardNode(nullptr),
+                                             rewardSize(0.1),
+                                             spawnRadius(2.0),
+                                             gen(rd()),
+                                             dis(-spawnRadius, spawnRadius),
+                                             score(0)
     {
+        if (!supervisor)
+        {
+            std::cerr << "[RewardManager] Error: supervisor is null." << std::endl;
+            return;
+        }
         robotNode = supervisor->getSelf();
-        dis = std::uniform_real_distribution<>(-spawnRadius, spawnRadius);
+        if (!robotNode)
+        {
+            std::cerr << "[RewardManager] Warning: getSelf() returned nullptr."
+                      << " The controller might not be attached to a robot node." << std::endl;
+        }
     }
 
     // Создать новую награду в случайной позиции
