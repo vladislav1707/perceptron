@@ -350,10 +350,11 @@ public:
         double updatedValue = reward + gamma * nextMax;
 
         // 4) Подготовливаем таргет (все выходы = текущие Q, кроме action)
-        currentQ[action] = updatedValue;
+        std::vector<double> target = currentQ;
+        target[action] = updatedValue;
 
         // 5) Вызываем уже готовый backprop с таргетом
-        backprop(currentQ);
+        backprop(target);
     }
 
     double calculateError(const std::vector<double> &target)
