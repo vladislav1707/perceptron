@@ -331,8 +331,30 @@ public:
                 double reward,
                 const std::vector<double> &nextState,
                 bool done,
-                double gamma = 0.99)
+                double gamma = 0.99,
+                double epsilon = 0.1)
     {
+        // Если action не задан, используем epsilon-greedy для выбора действия
+        if (action == -1)
+        {
+            // Прямой проход для текущего состояния
+            forward(state);
+            std::vector<double> qValues = getOutput();
+
+            // Случайный выбор действия с вероятностью epsilon
+            if (dis(gen) < epsilon)
+            {
+                int numActions = qValues.size();
+                std::uniform_int_distribution<> action_dist(0, numActions - 1);
+                action = action_dist(gen);
+            }
+            else
+            {
+                // Выбор действия с максимальным Q-значением
+                action = std::max_element(qValues.begin(), qValues.end()) - qValues.begin();
+            }
+        }
+
         // 1) Прямой проход (forward) для текущего состояния
         forward(state);
         std::vector<double> currentQ = getOutput();
