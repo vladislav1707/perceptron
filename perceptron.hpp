@@ -341,18 +341,10 @@ public:
             forward(state);
             std::vector<double> qValues = getOutput();
 
-            // Случайный выбор действия с вероятностью epsilon
-            if (dis(gen) < epsilon)
-            {
-                int numActions = qValues.size();
-                std::uniform_int_distribution<> action_dist(0, numActions - 1);
-                action = action_dist(gen);
-            }
-            else
-            {
-                // Выбор действия с максимальным Q-значением
-                action = std::max_element(qValues.begin(), qValues.end()) - qValues.begin();
-            }
+            //! Случайный выбор действия с вероятностью epsilon тут отсутствует тк реализовано в другом файле!
+            //! не надо его сюда добавлять
+            // Выбор действия с максимальным Q-значением
+            action = std::max_element(qValues.begin(), qValues.end()) - qValues.begin();
         }
 
         // 1) Прямой проход (forward) для текущего состояния
