@@ -1,3 +1,5 @@
+//! есть теория что ошибка происходит из за утечки памяти в коде
+
 #include <webots/Robot.hpp>
 #include <webots/Motor.hpp>
 #include <webots/Gyro.hpp>
