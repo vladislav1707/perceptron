@@ -314,63 +314,6 @@ public:
         }
     }
 
-    // --------------------------------------------------------
-    //   реализация Q-обучения
-    // --------------------------------------------------------
-    // Предполагается, что сеть умеет выдавать Q-значения
-    // во всех выходных нейронах (по одному на каждое действие).
-    // Здесь:
-    //   state      - текущее состояние среды (вектор входа)
-    //   action     - индекс действия, которое мы применили
-    //   reward     - полученная награда
-    //   nextState  - новое состояние после действия
-    //   done       - флаг конца эпизода
-    //   gamma      - коэффициент дисконтирования
-    void qLearn(const std::vector<double> &state,
-                int action,
-                double reward,
-                const std::vector<double> &nextState,
-                bool done,
-                double gamma = 0.99,
-                double epsilon = 0.1)
-    {
-        // Если action не задан, используем epsilon-greedy для выбора действия
-        if (action == -1)
-        {
-            // Прямой проход для текущего состояния
-            forward(state);
-            std::vector<double> qValues = getOutput();
-
-            //! Случайный выбор действия с вероятностью epsilon тут отсутствует тк реализовано в другом файле!
-            //! не надо его сюда добавлять
-            // Выбор действия с максимальным Q-значением
-            action = std::max_element(qValues.begin(), qValues.end()) - qValues.begin();
-        }
-
-        // 1) Прямой проход (forward) для текущего состояния
-        forward(state);
-        std::vector<double> currentQ = getOutput();
-
-        // 2) Если эпизод не завершен, моделируем следующее состояние
-        double nextMax = 0.0;
-        if (!done)
-        {
-            forward(nextState);
-            std::vector<double> nextQ = getOutput();
-            nextMax = *std::max_element(nextQ.begin(), nextQ.end());
-        }
-
-        // 3) Вычисляем целевое значение
-        double updatedValue = reward + gamma * nextMax;
-
-        // 4) Подготовливаем таргет (все выходы = текущие Q, кроме action)
-        std::vector<double> target = currentQ;
-        target[action] = updatedValue;
-
-        // 5) Вызываем уже готовый backprop с таргетом
-        backprop(target);
-    }
-
     double calculateError(const std::vector<double> &target)
     {
         double error = 0.0;
